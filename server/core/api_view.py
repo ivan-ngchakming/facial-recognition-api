@@ -142,7 +142,7 @@ class ApiView(MethodView):
         if methods is None or len(methods) > 0:
             blueprint.add_url_rule(
                 view_func=view_func,
-                rule=f"/{name}/",
+                rule=f"/{name}",
                 methods=methods or ["GET", "POST", "PATCH"],
             )
         if single_methods is None or len(single_methods) > 0:

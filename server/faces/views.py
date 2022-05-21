@@ -114,7 +114,12 @@ class ImageFileView(ApiView):
 
 class FaceSearchView(ApiView):
     def get(self):
-        return {}
+        url = request.args.get("url")
+
+        if not url:
+            return {"error": "Image URL not provided."}, status.HTTP_400_BAD_REQUEST
+
+        return {"data": self.search(url)}, status.HTTP_200_OK
 
     def put(self):
         data = request.json
@@ -122,8 +127,12 @@ class FaceSearchView(ApiView):
         if not data["url"]:
             return {"error": "Image URL not provided."}, status.HTTP_400_BAD_REQUEST
 
+        return {"data": self.search(data["url"])}, status.HTTP_200_OK
+
+    @staticmethod
+    def search(url):
         obj = Photo()
-        image_arr = Photo.get_image_arr_from_url(data["url"])
+        image_arr = Photo.get_image_arr_from_url(url)
         obj.create(image_arr)
 
         # calculate cosine distance to all face in database
@@ -139,7 +148,7 @@ class FaceSearchView(ApiView):
                 current_results.sort(key=lambda x: x["score"], reverse=True)
             results.append(current_results)
 
-        return {"data": results}
+        return results
 
     @classmethod
     def register(cls, name: str, blueprint: Blueprint):
