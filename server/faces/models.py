@@ -1,5 +1,6 @@
 # pylint: disable=E1101
 
+import hashlib
 import logging
 import uuid
 
@@ -85,11 +86,13 @@ class Photo(db.Model, ModelBaseMixin):
     url = db.Column(db.String)
     width = db.Column(db.Integer, nullable=False)
     height = db.Column(db.Integer, nullable=False)
+    sha256_hash = db.Column(db.String, unique=True)
 
     def create(self, image, url=None) -> "Photo":
         img_arr = np.array(image)
 
         self.width, self.height = image.size
+        self.sha256_hash = hashlib.sha256(image.tobytes()).hexdigest()
 
         if url is None:
             self.id = uuid.uuid4()
