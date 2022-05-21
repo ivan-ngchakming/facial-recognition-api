@@ -23,7 +23,7 @@ class PhotosView(ApiView):
 
     def post(self):
         data = request.json
-        print(data)
+
         if "url" in data:
             if data["url"].startswith("/static/"):
                 img = Image.open(

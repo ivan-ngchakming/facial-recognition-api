@@ -1,9 +1,11 @@
 import logging
 
+import cv2
 import numpy as np
 from ariadne import MutationType, convert_kwargs_to_snake_case
 from sqlalchemy.exc import IntegrityError
 
+from ...config import Config
 from ...database import db
 from ...faces.models import Face, Photo, Profile
 from ..utils.dev import runtime
@@ -20,9 +22,15 @@ def resolve_photo(_, info, rbytes):
     image = image.convert("RGB")
 
     photo = Photo()
-    photo.create(image)
+    img_arr = photo.create(image)
+
     db.session.add(photo)
     db.session.commit()
+
+    cv2.imwrite(
+        f"{Config.PROJECT_DIR}/public/{photo.id}.jpeg",
+        cv2.cvtColor(img_arr, cv2.COLOR_RGB2BGR),
+    )
 
     return photo
 

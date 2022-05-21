@@ -97,10 +97,6 @@ class Photo(db.Model, ModelBaseMixin):
         if url is None:
             self.id = uuid.uuid4()
             self.url = f"/static/{self.id}.jpeg"
-            cv2.imwrite(
-                f"{Config.PROJECT_DIR}/public/{self.id}.jpeg",
-                cv2.cvtColor(img_arr, cv2.COLOR_RGB2BGR),
-            )
         else:
             self.url = url
 
@@ -115,4 +111,4 @@ class Photo(db.Model, ModelBaseMixin):
             )
             self.faces.append(face)
 
-        return self
+        return img_arr
