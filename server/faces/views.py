@@ -132,10 +132,13 @@ class FaceSearchView(ApiView):
         faces = Face.query.all()
         results = []
         for face_to_search in obj.faces:
+            current_results = []
             for face in faces:
                 score = cosine_similarity(face.encoding, face_to_search.encoding)
-                results.append({"face": face.to_dict(), "score": float(score)})
-        results.sort(key=lambda x: x["score"], reverse=True)
+                current_results.append({"face": face.to_dict(), "score": float(score)})
+                current_results.sort(key=lambda x: x["score"], reverse=True)
+            results.append(current_results)
+
         return {"data": results}
 
     @classmethod
