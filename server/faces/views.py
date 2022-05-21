@@ -37,10 +37,8 @@ class PhotosView(ApiView):
             obj.create(img, url=data["url"])
 
             if len(obj.faces) > 0:
-                # pylint: disable=E1101
                 self.db.session.add(obj)
                 self.db.session.commit()
-                # pylint: enable=E1101
 
                 return jsonify({"data": obj.to_dict()})
 

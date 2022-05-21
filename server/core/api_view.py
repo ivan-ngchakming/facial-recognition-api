@@ -40,10 +40,8 @@ class ApiView(MethodView):
             obj = self.model()
             obj = self._update_obj(obj, data)
 
-            # pylint: disable=E1101
             self.db.session.add(obj)
             self.db.session.commit()
-            # pylint: enable=E1101
 
             return jsonify(obj.to_dict())
 
@@ -56,10 +54,8 @@ class ApiView(MethodView):
 
         obj = self._update_obj(obj, data)
 
-        # pylint: disable=E1101
         self.db.session.add(obj)
         self.db.session.commit()
-        # pylint: enable=E1101
 
         return jsonify(obj.to_dict())
 

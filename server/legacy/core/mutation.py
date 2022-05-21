@@ -1,14 +1,11 @@
 import logging
 
 import cv2
-import numpy as np
 from ariadne import MutationType, convert_kwargs_to_snake_case
-from sqlalchemy.exc import IntegrityError
 
 from ...config import Config
 from ...database import db
 from ...faces.models import Face, Photo, Profile
-from ..utils.dev import runtime
 from ..utils.image import decode_img
 
 logger = logging.getLogger(__name__)

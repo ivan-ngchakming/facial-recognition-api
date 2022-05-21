@@ -1,0 +1,11 @@
+[flake8]
+ignore
+exclude =
+    .git,
+    __pycache__,
+    .vscode,
+    assets,
+    public,
+    *migrations*,
+    server/legacy*
+max-line-length = 119

@@ -12,7 +12,10 @@ class CustomFormatter(logging.Formatter):
     green = "\x1b[36;21m"
     bold_red = "\x1b[31;1m"
     reset = "\x1b[0m"
-    fformat = "\x1b[1;30;21m{asctime}<reset> | <color>{levelname: <8}<reset> | \x1b[32;21m{name}:{filename}:{funcName}:{lineno}<reset> - <color>{message}<reset>"
+    fformat = (
+        "\x1b[1;30;21m{asctime}<reset> | <color>{levelname: <8}<reset> | "
+        "\x1b[32;21m{name}:{filename}:{funcName}:{lineno}<reset> - <color>{message}<reset>"
+    )
 
     FORMATS = {
         logging.DEBUG: fformat.replace("<reset>", reset).replace("<color>", blue),

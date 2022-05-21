@@ -1,5 +1,3 @@
-# pylint: disable=E1101
-
 import uuid
 
 from sqlalchemy.dialects.postgresql import UUID

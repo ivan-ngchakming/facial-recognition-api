@@ -1,3 +1,6 @@
+from .legacy.commands import build_cli, data_cli, dev_cli
+from flask import send_file
+from .theme import theme as theme_bp
 import logging
 import importlib
 
@@ -10,7 +13,6 @@ from flask_migrate import Migrate
 
 from .config import Config
 from .database import db
-from .faces import face_app
 from .faces.models import Photo
 from .legacy.schema import schema
 from .legacy.taskmanager import manager as task_manager
@@ -58,8 +60,6 @@ for name in [".core.views", ".faces.views"]:
 
 
 # override browsable api views
-from .theme import theme as theme_bp
-
 app.blueprints["flask-api"] = theme_bp
 
 
@@ -81,9 +81,6 @@ def graphql():
         return jsonify(result), status_code
 
 
-from flask import send_file
-
-
 @app.route("/api/image/<int:id>")
 def post_image(id):
     """ post image and return the response """
@@ -92,7 +89,6 @@ def post_image(id):
 
 
 # Register CLI Groups
-from .legacy.commands import build_cli, data_cli, dev_cli
 
 app.cli.add_command(build_cli)
 app.cli.add_command(data_cli)

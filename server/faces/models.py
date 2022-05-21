@@ -1,11 +1,8 @@
-# pylint: disable=E1101
-
 import hashlib
 import logging
 import uuid
 
 import cv2
-from ..config import Config
 import numpy as np
 from sqlalchemy.orm import backref
 from sqlalchemy.dialects.postgresql import UUID
