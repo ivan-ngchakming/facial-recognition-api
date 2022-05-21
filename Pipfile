@@ -1,0 +1,32 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+flask = "*"
+flask-cors = "*"
+flask-migrate = "*"
+opencv-python = "*"
+ariadne = "*"
+sqlalchemy = "*"
+numpy = "*"
+onnxruntime = "*"
+click = "*"
+tqdm = "*"
+pillow = "*"
+cython = "*"
+insightface = "*"
+python-dotenv = "*"
+psycopg2 = "*"
+psutil = "*"
+flask-api = "*"
+sqlalchemy-serializer = "*"
+black = "*"
+gitpython = "*"
+
+[dev-packages]
+pre-commit = "*"
+
+[requires]
+python_version = "3.8"
