@@ -27,6 +27,7 @@ CORS(
         "http://localhost:5000",
         "https://facial-recognition.ivan0313.tk",
         "https://facial-recognition-api.ivan0313.tk",
+        "https://facesearch.ivan0313.tk",
     ],
 )
 app.config.from_object(Config)
