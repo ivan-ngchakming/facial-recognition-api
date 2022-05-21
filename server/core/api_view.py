@@ -18,11 +18,6 @@ class ApiView(MethodView):
     db = db
     model = None
 
-    def __init__(self, model=None) -> None:
-        super().__init__()
-        if model:
-            self.model = model
-
     def get(self, id: str = None) -> Response:
         """Get list of objects or one by object id
 
@@ -134,7 +129,9 @@ class ApiView(MethodView):
         return value
 
     @classmethod
-    def register(cls, name: str, blueprint: Blueprint):
+    def register(
+        cls, name: str, blueprint: Blueprint, methods=None, single_methods=None
+    ):
         """Register view to flask app
 
         Args:
@@ -142,9 +139,15 @@ class ApiView(MethodView):
             blueprint (Blueprint): blueprint object to register to
         """
         view_func = cls.as_view(name)
-        blueprint.add_url_rule(
-            view_func=view_func, rule=f"/{name}/", methods=["GET", "POST", "PATCH"]
-        )
-        blueprint.add_url_rule(
-            view_func=view_func, rule=f"/{name}/<string:id>", methods=["GET", "PATCH"]
-        )
+        if methods is None or len(methods) > 0:
+            blueprint.add_url_rule(
+                view_func=view_func,
+                rule=f"/{name}/",
+                methods=methods or ["GET", "POST", "PATCH"],
+            )
+        if single_methods is None or len(single_methods) > 0:
+            blueprint.add_url_rule(
+                view_func=view_func,
+                rule=f"/{name}/<string:id>",
+                methods=single_methods or ["GET", "PATCH"],
+            )

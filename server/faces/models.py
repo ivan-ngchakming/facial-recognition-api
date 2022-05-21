@@ -1,11 +1,14 @@
 import hashlib
 import logging
 import uuid
+from io import BytesIO
 
 import cv2
 import numpy as np
-from sqlalchemy.orm import backref
+import requests
+from PIL import Image
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import backref
 
 from ..core.model_base import ModelBaseMixin
 from ..database import db
@@ -119,3 +122,9 @@ class Photo(db.Model, ModelBaseMixin):
             self.faces.append(face)
 
         return img_arr
+
+    @staticmethod
+    def get_image_arr_from_url(url):
+        res = requests.get(url)
+        image = Image.open(BytesIO(res.content))
+        return image

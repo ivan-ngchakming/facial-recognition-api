@@ -1,12 +1,10 @@
 import os
 import uuid
-from io import BytesIO
 
-import requests
 from flask import Blueprint, Response, request
-from flask.views import MethodView
 from flask_api import status
 from PIL import Image
+from server.faces.cosine_similarity import cosine_similarity
 from werkzeug.datastructures import FileStorage
 
 from ..config import Config
@@ -36,8 +34,7 @@ class PhotosView(ApiView):
             if data["url"].startswith("/static/"):
                 img = Image.open(Config.PROJECT_DIR + data["url"])
             else:
-                res = requests.get(data.url)
-                img = Image.open(BytesIO(res.content))
+                img = Photo.get_image_arr_from_url(data["url"])
 
             obj = Photo()
             obj.create(img, url=data["url"])
@@ -53,7 +50,7 @@ class PhotosView(ApiView):
         return {"error": "Image url not provided"}, status.HTTP_400_BAD_REQUEST
 
 
-class ImageFileView(MethodView):
+class ImageFileView(ApiView):
     upload_folder = Config.UPLOAD_FOLDER
     allowed_extensions = Config.ALLOWED_EXTENSIONS
 
@@ -110,19 +107,40 @@ class ImageFileView(MethodView):
 
     @classmethod
     def register(cls, name: str, blueprint: Blueprint):
-        """Register view to flask app
+        return super().register(
+            name, blueprint, methods=["GET", "POST"], single_methods=["DELETE"]
+        )
 
-        Args:
-            name (str): name of view
-            blueprint (Blueprint): blueprint object to register to
-        """
-        view_func = cls.as_view(name)
-        blueprint.add_url_rule(
-            view_func=view_func, rule=f"/{name}/", methods=["GET", "POST"]
-        )
-        blueprint.add_url_rule(
-            view_func=view_func, rule=f"/{name}/<string:filename>", methods=["DELETE"]
-        )
+
+class FaceSearchView(ApiView):
+    def get(self):
+        return {}
+
+    def put(self):
+        data = request.json
+
+        if not data["url"]:
+            return {"error": "Image URL not provided."}, status.HTTP_400_BAD_REQUEST
+
+        obj = Photo()
+        image_arr = Photo.get_image_arr_from_url(data["url"])
+        obj.create(image_arr)
+
+        # calculate cosine distance to all face in database
+        # TODO: use numpy vectorized operation to speed up consine distance calculation
+        # TODO: Use k-NN algorithm to speed up search time
+        faces = Face.query.all()
+        results = []
+        for face_to_search in obj.faces:
+            for face in faces:
+                score = cosine_similarity(face.encoding, face_to_search.encoding)
+                results.append({"face": face.to_dict(), "score": float(score)})
+        results.sort(key=lambda x: x["score"], reverse=True)
+        return {"data": results}
+
+    @classmethod
+    def register(cls, name: str, blueprint: Blueprint):
+        return super().register(name, blueprint, methods=["GET", "PUT"])
 
 
 blueprint = Blueprint("faces", __name__)
@@ -132,3 +150,4 @@ ProfileView.register("profiles", blueprint)
 ProfileAttributeView.register("profile-attributes", blueprint)
 PhotosView.register("photos", blueprint)
 ImageFileView.register("photo-upload", blueprint)
+FaceSearchView.register("face-search", blueprint)
