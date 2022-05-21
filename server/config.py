@@ -18,19 +18,17 @@ class Config(object):
     SECRET_KEY = os.urandom(24)
 
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-
     PROJECT_DIR = os.path.abspath(os.path.dirname(BASE_DIR))
+    PUBLIC_DIR = f"{PROJECT_DIR}/public"
 
     SQLALCHEMY_DATABASE_URI = (
         f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )
-
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-
     MIGRATION_DIR = BASE_DIR + "/migrations"
 
-    INIT_TASK_WORKERS = 2
-
     # File upload
-    UPLOAD_FOLDER = f"{PROJECT_DIR}/static"
+    UPLOAD_FOLDER = f"{PROJECT_DIR}/public/static"
     ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
+
+    INIT_TASK_WORKERS = 2

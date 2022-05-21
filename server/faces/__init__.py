@@ -1,5 +1,4 @@
 from .cosine_similarity import *  # noqa
-import os
 
 from insightface.app import FaceAnalysis
 
@@ -32,4 +31,4 @@ class FaceApp(FaceAnalysis):
         return super().get(*args, **kwargs)
 
 
-face_app = FaceApp(root=os.path.join(Config.PROJECT_DIR, "assets"))
+face_app = FaceApp(root=Config.PUBLIC_DIR)

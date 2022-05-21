@@ -18,7 +18,7 @@ from .logging_utils import get_console_handler
 from .theme import theme as theme_bp
 
 app = FlaskAPI(
-    __name__, static_folder=f"{Config.PROJECT_DIR}/static", static_url_path="/static"
+    __name__, static_folder=f"{Config.PROJECT_DIR}/public", static_url_path="/"
 )
 CORS(
     app,
