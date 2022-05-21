@@ -1,11 +1,11 @@
 query = """
 type Query {
-    photo(photoId: ID!): Photo!
-    photos(page: Int, profileId: ID, photosPerPage: Int): PhotoPagination!
-    profile(profileId: ID!): Profile!
+    photo(photoId: String!): Photo!
+    photos(page: Int, profileId: String, photosPerPage: Int): PhotoPagination!
+    profile(profileId: String!): Profile!
     profiles(page: Int, perPage: Int): ProfilePagination!
-    identifyFace(faceId: ID!): [IdentifyFaceResult]!
-    task(taskCollectionId: ID!): Task
+    identifyFace(faceId: String!): [IdentifyFaceResult]!
+    task(taskCollectionId: String!): Task
     tasks: [Task]
 }
 """

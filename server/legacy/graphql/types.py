@@ -1,6 +1,6 @@
 types = """
 type Profile {
-    id: Int!
+    id: String!
     name: String
     facesCount: Int
     thumbnail: Face
@@ -14,7 +14,7 @@ type ProfilePagination {
 }
 
 type Photo {
-    id: Int!
+    id: String!
     width: Int!
     height: Int!
     array: String!
@@ -50,7 +50,7 @@ type Landmark {
 }
 
 type IdentifyFaceResult {
-    id: Int
+    id: String
     score: Float
 }
 

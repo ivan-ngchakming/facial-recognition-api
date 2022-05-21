@@ -1,27 +1,34 @@
+# pylint: disable=E1101
+
 import logging
 import uuid
 
 import cv2
+from ..config import Config
 import numpy as np
 from sqlalchemy.orm import backref
-from sqlalchemy_serializer import SerializerMixin
+from sqlalchemy.dialects.postgresql import UUID
 
+from ..core.model_base import ModelBaseMixin
 from ..database import db
 from . import face_app
 
 logger = logging.getLogger(__name__)
 
-# pylint: disable=E1101
 
-
-class Profile(db.Model, SerializerMixin):
+class Profile(db.Model, ModelBaseMixin):
     __tablename__ = "profile"
 
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
+    name = db.Column(db.String(100))
+
+    first_name = db.Column(db.String(100))
+    middle_name = db.Column(db.String(100))
+    last_name = db.Column(db.String(100))
+
+    sex = db.Column(db.String(10))
 
     # One-to-one relationship
-    thumbnail_id = db.Column(db.Integer, db.ForeignKey("face.id"))
+    thumbnail_id = db.Column(UUID(as_uuid=True), db.ForeignKey("face.id"))
     thumbnail = db.relationship(
         "Face",
         uselist=False,
@@ -30,28 +37,30 @@ class Profile(db.Model, SerializerMixin):
         post_update=True,
     )
 
-    @property
-    def faces_count(self):
-        return len(self.faces)
 
-    def __repr__(self):
-        return f"<Profile {self.name}({self.id})>"
+class ProfileAttribute(db.Model, ModelBaseMixin):
+    __tablename__ = "profile_attribute"
+
+    profile_id = db.Column(UUID(as_uuid=True), db.ForeignKey("profile.id"))
+    profile = db.relationship(
+        "Profile",
+        uselist=False,
+        foreign_keys=profile_id,
+        backref=db.backref("attributes", cascade="all,delete"),
+    )
 
 
-class Face(db.Model, SerializerMixin):
+class Face(db.Model, ModelBaseMixin):
     __tablename__ = "face"
 
     serialize_rules = ("-profile", "-photo.faces", "-encoding", "-landmarks")
 
-    serialize_types = ((np.ndarray, lambda x: x.tolist()),)
-
-    id = db.Column(db.Integer, primary_key=True)
     location = db.Column(db.PickleType, nullable=False)
     landmarks = db.Column(db.PickleType, nullable=False)
     encoding = db.Column(db.PickleType, nullable=False)
 
     # Many-to-one relationship
-    profile_id = db.Column(db.Integer, db.ForeignKey("profile.id"))
+    profile_id = db.Column(UUID(as_uuid=True), db.ForeignKey("profile.id"))
     profile = db.relationship(
         "Profile",
         uselist=False,
@@ -60,27 +69,19 @@ class Face(db.Model, SerializerMixin):
     )
 
     # Many-to-one relationship
-    photo_id = db.Column(db.Integer, db.ForeignKey("photo.id"))
+    photo_id = db.Column(UUID(as_uuid=True), db.ForeignKey("photo.id"))
     photo = db.relationship(
         "Photo",
         uselist=False,
         backref=backref("faces", cascade="all,delete,delete-orphan"),
     )
 
-    def __repr__(self):
-        if self.profile is None:
-            return f"<Face of unknown person in Photo {self.photo.id} (id: {self.id})>"
-        else:
-            return f"<Face of {self.profile.name} in Photo {self.photo.id} (id: {self.id})>"
 
-
-class Photo(db.Model, SerializerMixin):
+class Photo(db.Model, ModelBaseMixin):
     __tablename__ = "photo"
 
     serialize_rules = ("-faces.photo",)
-    serialize_types = ((np.ndarray, lambda x: x.tolist()),)
 
-    id = db.Column(db.Integer, primary_key=True)
     url = db.Column(db.String)
     width = db.Column(db.Integer, nullable=False)
     height = db.Column(db.Integer, nullable=False)
@@ -90,9 +91,13 @@ class Photo(db.Model, SerializerMixin):
 
         self.width, self.height = image.size
 
-        if not url:
-            self.url = f"/static/{uuid.uuid4()}.jpeg"
-            cv2.imwrite(self.url, cv2.cvtColor(img_arr, cv2.COLOR_RGB2BGR))
+        if url is None:
+            obj_id = uuid.uuid4()
+            self.url = f"/static/{obj_id}.jpeg"
+            cv2.imwrite(
+                f"{Config.PROJECT_DIR}/public/{obj_id}.jpeg",
+                cv2.cvtColor(img_arr, cv2.COLOR_RGB2BGR),
+            )
         else:
             self.url = url
 
@@ -108,6 +113,3 @@ class Photo(db.Model, SerializerMixin):
             self.faces.append(face)
 
         return self
-
-    def __repr__(self):
-        return f"<Photo {self.id} ({len(self.faces)} faces)>"

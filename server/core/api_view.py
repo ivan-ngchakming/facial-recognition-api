@@ -20,11 +20,11 @@ class ApiView(MethodView):
         if model:
             self.model = model
 
-    def get(self, obj_id: int = None) -> Response:
+    def get(self, obj_id: str = None) -> Response:
         """Get list of objects or one by object id
 
         Args:
-            obj_id (int, optional): object id. Defaults to None.
+            obj_id (str, optional): object id. Defaults to None.
 
         Returns:
             Response: response object
@@ -47,7 +47,7 @@ class ApiView(MethodView):
 
             return jsonify(obj.to_dict())
 
-    def patch(self, obj_id: int = None) -> Response:
+    def patch(self, obj_id: str = None) -> Response:
         data = request.json
         if not obj_id:
             obj = self.model()

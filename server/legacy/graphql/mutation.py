@@ -1,9 +1,9 @@
 mutation = """
 type Mutation {
     photo(rbytes: String): Photo!
-    deletePhoto(ids: [ID]): [ID]
-    profile(_id: ID, name: String, faceIds: [Int], thumbnailId: Int): Profile!
-    assignFaceToProfile(faceId: Int!, profileId: Int!): Face!
+    deletePhoto(ids: [String]): [String]
+    profile(_id: String, name: String, faceIds: [String], thumbnailId: String): Profile!
+    assignFaceToProfile(faceId: String!, profileId: String!): Face!
     batchFaceRec(dirpath: String, priority: Float): Task
 }
 """
