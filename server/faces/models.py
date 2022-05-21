@@ -92,10 +92,10 @@ class Photo(db.Model, ModelBaseMixin):
         self.width, self.height = image.size
 
         if url is None:
-            obj_id = uuid.uuid4()
-            self.url = f"/static/{obj_id}.jpeg"
+            self.id = uuid.uuid4()
+            self.url = f"/static/{self.id}.jpeg"
             cv2.imwrite(
-                f"{Config.PROJECT_DIR}/public/{obj_id}.jpeg",
+                f"{Config.PROJECT_DIR}/public/{self.id}.jpeg",
                 cv2.cvtColor(img_arr, cv2.COLOR_RGB2BGR),
             )
         else:
