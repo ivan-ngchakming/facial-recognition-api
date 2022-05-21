@@ -1,13 +1,17 @@
+import os
+import uuid
 from io import BytesIO
 
 import requests
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, Response, request
+from flask.views import MethodView
 from flask_api import status
 from PIL import Image
+from werkzeug.datastructures import FileStorage
 
 from ..config import Config
 from ..core.api_view import ApiView
-from .models import Face, Photo, Profile
+from .models import Face, Photo, Profile, ProfileAttribute
 
 
 class FaceView(ApiView):
@@ -18,6 +22,10 @@ class ProfileView(ApiView):
     model = Profile
 
 
+class ProfileAttributeView(ApiView):
+    model = ProfileAttribute
+
+
 class PhotosView(ApiView):
     model = Photo
 
@@ -26,9 +34,7 @@ class PhotosView(ApiView):
 
         if "url" in data:
             if data["url"].startswith("/static/"):
-                img = Image.open(
-                    Config.PROJECT_DIR + "/public/" + data["url"].split("/")[-1]
-                )
+                img = Image.open(Config.PROJECT_DIR + data["url"])
             else:
                 res = requests.get(data.url)
                 img = Image.open(BytesIO(res.content))
@@ -40,17 +46,89 @@ class PhotosView(ApiView):
                 self.db.session.add(obj)
                 self.db.session.commit()
 
-                return jsonify({"data": obj.to_dict()})
+                return {"data": obj.to_dict()}
 
+            return ({"error": "No faces found in picture."}, status.HTTP_204_NO_CONTENT)
+
+        return {"error": "Image url not provided"}, status.HTTP_400_BAD_REQUEST
+
+
+class ImageFileView(MethodView):
+    upload_folder = Config.UPLOAD_FOLDER
+    allowed_extensions = Config.ALLOWED_EXTENSIONS
+
+    def get(self) -> Response:
+        return {}
+
+    def post(self) -> Response:
+        """Upload a new image to `/public` directory of the project"""
+
+        # check if the post request has the file part
+        if "file" not in request.files:
+            return {"error": "File not provided"}, status.HTTP_400_BAD_REQUEST
+
+        file = request.files["file"]
+        # If the user does not select a file, the browser submits an
+        # empty file without a filename.
+        if file.filename == "" or not file:
+            return {"error": "File not selected"}, status.HTTP_400_BAD_REQUEST
+
+        if not self.allowed_file(file.filename):
             return (
-                jsonify({"error": "No faces found in picture."}),
-                status.HTTP_204_NO_CONTENT,
+                {"error": f"File extension {self.get_file_extension(file.filename)}"},
+                status.HTTP_400_BAD_REQUEST,
             )
 
-        return jsonify({"error": "Image url not provided"}), status.HTTP_400_BAD_REQUEST
+        filename = self.upload(file)
+        return {"url": f"/static/{filename}"}, status.HTTP_201_CREATED
+
+    def delete(self, filename: str) -> Response:
+        full_filename = self.upload_folder + "/" + filename
+
+        if os.path.exists(full_filename):
+            os.remove(full_filename)
+            return {"success": "File successfully removed"}, status.HTTP_200_OK
+        else:
+            return {"error": "File does not exist"}, status.HTTP_204_NO_CONTENT
+
+    @staticmethod
+    def get_file_extension(filename):
+        return filename.rsplit(".", 1)[1].lower()
+
+    @classmethod
+    def allowed_file(cls, filename):
+        return (
+            "." in filename
+            and cls.get_file_extension(filename) in cls.allowed_extensions
+        )
+
+    @classmethod
+    def upload(cls, file: FileStorage) -> str:
+        filename = f"{uuid.uuid4()}.{cls.get_file_extension(file.filename)}"
+        file.save(os.path.join(cls.upload_folder, filename))
+        return filename
+
+    @classmethod
+    def register(cls, name: str, blueprint: Blueprint):
+        """Register view to flask app
+
+        Args:
+            name (str): name of view
+            blueprint (Blueprint): blueprint object to register to
+        """
+        view_func = cls.as_view(name)
+        blueprint.add_url_rule(
+            view_func=view_func, rule=f"/{name}/", methods=["GET", "POST"]
+        )
+        blueprint.add_url_rule(
+            view_func=view_func, rule=f"/{name}/<string:filename>", methods=["DELETE"]
+        )
 
 
 blueprint = Blueprint("faces", __name__)
+
 FaceView.register("faces", blueprint)
 ProfileView.register("profiles", blueprint)
+ProfileAttributeView.register("profile-attributes", blueprint)
 PhotosView.register("photos", blueprint)
+ImageFileView.register("photo-upload", blueprint)

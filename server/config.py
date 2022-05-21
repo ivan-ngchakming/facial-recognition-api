@@ -32,5 +32,5 @@ class Config(object):
     INIT_TASK_WORKERS = 2
 
     # File upload
-    UPLOAD_FOLDER = f"{PROJECT_DIR}/public"
+    UPLOAD_FOLDER = f"{PROJECT_DIR}/static"
     ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}

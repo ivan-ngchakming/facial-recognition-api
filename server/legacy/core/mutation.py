@@ -25,7 +25,7 @@ def resolve_photo(_, info, rbytes):
     db.session.commit()
 
     cv2.imwrite(
-        f"{Config.PROJECT_DIR}/public/{photo.id}.jpeg",
+        f"{Config.PROJECT_DIR}/static/{photo.id}.jpeg",
         cv2.cvtColor(img_arr, cv2.COLOR_RGB2BGR),
     )
 

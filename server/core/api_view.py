@@ -1,10 +1,13 @@
 import json
 
 from dateutil.parser import parse
-from flask import Blueprint, Response, jsonify, request
+from flask import Blueprint, Response, request
 from flask.views import MethodView
 from flask_sqlalchemy import Model
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import sqltypes
+from flask_api import status
+from sqlalchemy.orm.collections import InstrumentedList
 
 from ..database import db
 
@@ -20,50 +23,68 @@ class ApiView(MethodView):
         if model:
             self.model = model
 
-    def get(self, obj_id: str = None) -> Response:
+    def get(self, id: str = None) -> Response:
         """Get list of objects or one by object id
 
         Args:
-            obj_id (str, optional): object id. Defaults to None.
+            id (str, optional): object id. Defaults to None.
 
         Returns:
             Response: response object
         """
-        if obj_id:
-            return self.model.query.get(obj_id).to_dict()
+        if id:
+            return self.model.query.get(id).to_dict()
 
-        return jsonify([obj.to_dict() for obj in self.model.query.all()])
+        return [obj.to_dict() for obj in self.model.query.all()], status.HTTP_200_OK
 
     def post(self) -> Response:
-        if request.is_json:
-            data = request.json
-            obj = self.model()
-            obj = self._update_obj(obj, data)
-
-            self.db.session.add(obj)
-            self.db.session.commit()
-
-            return jsonify(obj.to_dict())
-
-    def patch(self, obj_id: str = None) -> Response:
         data = request.json
-        if not obj_id:
-            obj = self.model()
-        else:
-            obj = self.model.query.get(obj_id)
-
-        obj = self._update_obj(obj, data)
+        obj = self.model()
+        obj = self._update_obj(obj, data, update_id=True)
 
         self.db.session.add(obj)
         self.db.session.commit()
 
-        return jsonify(obj.to_dict())
+        return obj.to_dict()
 
-    def _update_obj(self, obj: Model, data: dict) -> Model:
+    def patch(self, id: str = None) -> Response:
+        data = request.json
+        if not id:
+            obj = self.model()
+        else:
+            obj = self.model.query.get(id)
+
+        obj = self._update_obj(obj, data)
+
+        self.db.session.add(obj)
+
+        try:
+            self.db.session.commit()
+        except IntegrityError:
+            return (
+                {
+                    "error": "Unexpected IntegrityError occurred when inserting into database."
+                },
+                status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        return obj.to_dict()
+
+    def _update_obj(self, obj: Model, data: dict, update_id: bool = False) -> Model:
         for k, v in data.items():
             if hasattr(obj, k):
+                if k == "id" and not update_id:
+                    continue
+
                 if isinstance(v, dict):
                     obj = self._update_obj(getattr(obj, k), v)
+                    continue
+
+                if isinstance(getattr(obj, k), InstrumentedList):
+                    if isinstance(v, list):
+                        self._update_obj_list(k, getattr(obj, k), v)
+                    else:
+                        raise Exception("Invalid input")
                     continue
 
                 column_type = type(getattr(obj.__table__.columns, k).type)
@@ -79,7 +100,27 @@ class ApiView(MethodView):
                 if isinstance(v, dict) or isinstance(v, list):
                     v = json.dumps(v) if v else None
                 setattr(obj, k, v)
+
         return obj
+
+    def _update_obj_list(
+        self, prop_name: str, obj_list: InstrumentedList, data_list: list
+    ):
+        """Update list of related objects from input data"""
+        for data in data_list:
+            updated = False
+            if "id" in data:
+                for obj in obj_list:
+                    if str(obj.id) == data["id"]:
+                        self._update_obj(obj, data)
+                        updated = True
+                        continue
+
+            if not updated:
+                # id not given or obj with this id not found
+                model = getattr(self.model, prop_name).prop.entity.entity
+                obj = model()
+                obj_list.append(self._update_obj(obj, data))
 
     @staticmethod
     def _str_to_date_time(column_type: type, value: any) -> any:
@@ -105,5 +146,5 @@ class ApiView(MethodView):
             view_func=view_func, rule=f"/{name}/", methods=["GET", "POST", "PATCH"]
         )
         blueprint.add_url_rule(
-            view_func=view_func, rule=f"/{name}/<int:id>", methods=["GET", "PATCH"]
+            view_func=view_func, rule=f"/{name}/<string:id>", methods=["GET", "PATCH"]
         )

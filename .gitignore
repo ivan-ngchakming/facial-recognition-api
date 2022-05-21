@@ -2,5 +2,5 @@ __pycache__/
 .env
 .vscode
 
-/public
+/static
 /assets

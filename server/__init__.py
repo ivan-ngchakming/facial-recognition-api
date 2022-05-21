@@ -1,8 +1,5 @@
-from .legacy.commands import build_cli, data_cli, dev_cli
-from flask import send_file
-from .theme import theme as theme_bp
-import logging
 import importlib
+import logging
 
 from ariadne import graphql_sync
 from ariadne.constants import PLAYGROUND_HTML
@@ -13,13 +10,15 @@ from flask_migrate import Migrate
 
 from .config import Config
 from .database import db
-from .faces.models import Photo
+from .faces.models import *  # noqa
+from .legacy.commands import build_cli, data_cli, dev_cli
 from .legacy.schema import schema
 from .legacy.taskmanager import manager as task_manager
 from .logging_utils import get_console_handler
+from .theme import theme as theme_bp
 
 app = FlaskAPI(
-    __name__, static_folder=f"{Config.PROJECT_DIR}/public", static_url_path="/static"
+    __name__, static_folder=f"{Config.PROJECT_DIR}/static", static_url_path="/static"
 )
 CORS(
     app,
@@ -81,15 +80,7 @@ def graphql():
         return jsonify(result), status_code
 
 
-@app.route("/api/image/<int:id>")
-def post_image(id):
-    """ post image and return the response """
-    photo = Photo.query.get(id)
-    return send_file("../" + photo.url, mimetype="image/jpeg")
-
-
 # Register CLI Groups
-
 app.cli.add_command(build_cli)
 app.cli.add_command(data_cli)
 app.cli.add_command(dev_cli)

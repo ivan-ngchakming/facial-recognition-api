@@ -25,6 +25,8 @@ class Profile(db.Model, ModelBaseMixin):
 
     sex = db.Column(db.String(10))
 
+    birth = db.Column(db.Date())
+
     # One-to-one relationship
     thumbnail_id = db.Column(UUID(as_uuid=True), db.ForeignKey("face.id"))
     thumbnail = db.relationship(
@@ -38,6 +40,14 @@ class Profile(db.Model, ModelBaseMixin):
 
 class ProfileAttribute(db.Model, ModelBaseMixin):
     __tablename__ = "profile_attribute"
+    __table_args__ = (
+        db.UniqueConstraint("profile_id", "key", name="unique_key_per_profile"),
+    )
+
+    serialize_rules = ("-profile",)
+
+    key = db.Column(db.String(30), nullable=False)
+    value = db.Column(db.String, nullable=False, default="")
 
     profile_id = db.Column(UUID(as_uuid=True), db.ForeignKey("profile.id"))
     profile = db.relationship(
