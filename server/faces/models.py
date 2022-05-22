@@ -74,7 +74,7 @@ class Face(db.Model, ModelBaseMixin):
 
     serialize_rules = (
         "-profile.faces",
-        "-thumbnail",
+        "-profile.thumbnail",
         "-photo.faces",
         "-encoding",
         "-landmarks",
