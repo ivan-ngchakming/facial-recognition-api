@@ -100,6 +100,7 @@ class ImageFileView(ApiView):
     """Image file hosting service
 
     TODO: Set expiration date on files and clean up with cron jobs
+    TODO: Create Image file model to persist image file meta data to database
     """
 
     upload_folder = Config.UPLOAD_FOLDER
