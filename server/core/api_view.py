@@ -32,24 +32,26 @@ class ApiView(MethodView):
 
         return [obj.to_dict() for obj in self.model.query.all()], status.HTTP_200_OK
 
-    def post(self) -> Response:
+    def post(self, obj=None, excludes=None) -> Response:
         data = request.json
-        obj = self.model()
-        obj = self._update_obj(obj, data, update_id=True)
+        obj = obj or self.model()
+        obj = self._update_obj(obj, data, update_id=True, excludes=excludes)
 
         self.db.session.add(obj)
         self.db.session.commit()
 
         return obj.to_dict()
 
-    def patch(self, id: str = None) -> Response:
+    def patch(self, id: str = None, obj=None, excludes=None) -> Response:
         data = request.json
-        if not id:
-            obj = self.model()
-        else:
-            obj = self.model.query.get(id)
 
-        obj = self._update_obj(obj, data)
+        if not obj:
+            if not id:
+                obj = self.model()
+            else:
+                obj = self.model.query.get(id)
+
+        obj = self._update_obj(obj, data, excludes=excludes)
 
         self.db.session.add(obj)
 
@@ -65,8 +67,14 @@ class ApiView(MethodView):
 
         return obj.to_dict()
 
-    def _update_obj(self, obj: Model, data: dict, update_id: bool = False) -> Model:
+    def _update_obj(
+        self, obj: Model, data: dict, update_id: bool = False, excludes: list = None
+    ) -> Model:
         for k, v in data.items():
+            if excludes:
+                if k in excludes:
+                    continue
+
             if hasattr(obj, k):
                 if k == "id" and not update_id:
                     continue

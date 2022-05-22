@@ -40,6 +40,14 @@ class Profile(db.Model, ModelBaseMixin):
         post_update=True,
     )
 
+    def to_dict(self, *args, **kwargs):
+        obj_dict = super().to_dict(*args, **kwargs)
+        attributes = obj_dict.pop("attributes")
+        obj_dict["attributes"] = dict(
+            (attr["key"], attr["value"]) for attr in attributes
+        )
+        return obj_dict
+
 
 class ProfileAttribute(db.Model, ModelBaseMixin):
     __tablename__ = "profile_attribute"

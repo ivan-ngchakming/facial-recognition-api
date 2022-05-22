@@ -20,6 +20,40 @@ class FaceView(ApiView):
 class ProfileView(ApiView):
     model = Profile
 
+    def post(self):
+        data = request.json
+
+        obj: Profile = self.model()
+
+        if "attributes" in data:
+            obj.attributes = [
+                ProfileAttribute(key=attribute["key"], value=attribute["value"])
+                for attribute in data["attributes"]
+            ]
+
+        return super().post(obj=obj, excludes=["attributes"])
+
+    def patch(self, id=None):
+        data = request.json
+
+        if not id:
+            obj = self.model()
+        else:
+            obj = self.model.query.get(id)
+
+        if "attributes" in data:
+            for key, value in data["attributes"].items():
+                updated = False
+                for attribute_obj in obj.attributes:
+                    if key == attribute_obj.key:
+                        attribute_obj.value = value
+                        updated = True
+                        break
+                if not updated:
+                    obj.attributes.append(ProfileAttribute(key=key, value=value))
+
+        return super().post(obj=obj, excludes=["attributes"])
+
 
 class ProfileAttributeView(ApiView):
     model = ProfileAttribute
