@@ -20,6 +20,8 @@ class FaceView(ApiView):
 class ProfileView(ApiView):
     model = Profile
 
+    filterable_fields = ("name",)
+
     def post(self):
         data = request.json
 
@@ -27,8 +29,8 @@ class ProfileView(ApiView):
 
         if "attributes" in data:
             obj.attributes = [
-                ProfileAttribute(key=attribute["key"], value=attribute["value"])
-                for attribute in data["attributes"]
+                ProfileAttribute(key=key, value=value)
+                for key, value in data["attributes"].items()
             ]
 
         return super().post(obj=obj, excludes=["attributes"])

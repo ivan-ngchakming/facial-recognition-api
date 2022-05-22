@@ -72,7 +72,13 @@ class ProfileAttribute(db.Model, ModelBaseMixin):
 class Face(db.Model, ModelBaseMixin):
     __tablename__ = "face"
 
-    serialize_rules = ("-profile", "-photo.faces", "-encoding", "-landmarks")
+    serialize_rules = (
+        "-profile.faces",
+        "-thumbnail",
+        "-photo.faces",
+        "-encoding",
+        "-landmarks",
+    )
 
     location = db.Column(db.PickleType, nullable=False)
     landmarks = db.Column(db.PickleType, nullable=False)

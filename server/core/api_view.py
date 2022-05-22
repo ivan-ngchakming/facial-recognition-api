@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.sql import sqltypes
 from flask_api import status
 from sqlalchemy.orm.collections import InstrumentedList
+from sqlalchemy.orm import Query
 
 from ..database import db
 
@@ -17,6 +18,20 @@ class ApiView(MethodView):
 
     db = db
     model = None
+
+    allowed_operators = (
+        "$eq",
+        "$not",
+        "$null",
+        "$in",
+        "$gt",
+        "$gte",
+        "$lt",
+        "$lte",
+        "$btw",
+    )
+    sortable_fields = ("created_date", "updated_date")
+    _default_filterable_fields = ("id",)
 
     def get(self, id: str = None) -> Response:
         """Get list of objects or one by object id
@@ -30,7 +45,35 @@ class ApiView(MethodView):
         if id:
             return self.model.query.get(id).to_dict()
 
-        return [obj.to_dict() for obj in self.model.query.all()], status.HTTP_200_OK
+        query = self.model.query
+
+        # sort by
+        try:
+            query = self._apply_sort(query, request.args.get("sort"))
+        except KeyError:
+            pass
+
+        # filters
+        filters = []
+        for key in request.args.keys():
+            if key.startswith("filter."):
+                column = key[len("filter.") :]
+                value = request.args.get(key).split(":")
+                filters.append((column, *value))
+
+        query = self._apply_filters(query, filters)
+
+        page = request.args.get("page") or 1
+        limit = request.args.get("limit") or 10
+        query = query.paginate(page=page, per_page=limit)
+
+        return (
+            {
+                "data": [obj.to_dict() for obj in query.items],
+                "meta": {"total": query.total, "page": page, "limit": limit},
+            },
+            status.HTTP_200_OK,
+        )
 
     def post(self, obj=None, excludes=None) -> Response:
         data = request.json
@@ -135,6 +178,53 @@ class ApiView(MethodView):
             if column_type == sqltypes.Time:
                 value = parse(value).time()
         return value
+
+    @classmethod
+    def _apply_sort(cls, query: Query, sort_args_str: str) -> Query:
+        if not sort_args_str:
+            return query
+
+        column_name, *mode = map(lambda x: x.strip(), sort_args_str.split(","))
+        mode = "".join(mode)
+
+        if column_name not in cls.sortable_fields:
+            return query
+
+        column = getattr(cls.model, column_name)
+        if mode in ["asc", "desc"]:
+            column = getattr(column, mode)()
+
+        return query.order_by(column)
+
+    @classmethod
+    def _apply_filters(cls, query: Query, filters: list) -> Query:
+        """
+        filter operators: $eq, $not, $null, $in, $gt, $gte, $lt, $lte, $btw
+        """
+
+        if len(filters) == 0:
+            return query
+
+        criterion = ()
+        for curr_filter in filters:
+            column_name, operator, value = (
+                curr_filter if len(curr_filter) == 3 else (*curr_filter, None)
+            )
+            if column_name not in (
+                *cls.filterable_fields,
+                *cls._default_filterable_fields,
+            ):
+                continue
+            if operator not in cls.allowed_operators:
+                continue
+
+            # TODO: Check if operation is allowed for column
+
+            # TODO: store operator strings in object or enum
+            if operator == "$eq":
+                criterion += (getattr(cls.model, column_name) == value,)
+
+        return query.filter(*criterion)
 
     @classmethod
     def register(
