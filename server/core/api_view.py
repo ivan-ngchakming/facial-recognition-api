@@ -130,7 +130,13 @@ class ApiView(MethodView):
 
     @classmethod
     def register(
-        cls, name: str, blueprint: Blueprint, methods=None, single_methods=None
+        cls,
+        name: str,
+        blueprint: Blueprint,
+        pk="id",
+        pk_type="string",
+        methods=None,
+        pk_methods=None,
     ):
         """Register view to flask app
 
@@ -145,9 +151,9 @@ class ApiView(MethodView):
                 rule=f"/{name}",
                 methods=methods or ["GET", "POST", "PATCH"],
             )
-        if single_methods is None or len(single_methods) > 0:
+        if pk_methods is None or len(pk_methods) > 0:
             blueprint.add_url_rule(
                 view_func=view_func,
-                rule=f"/{name}/<string:id>",
-                methods=single_methods or ["GET", "PATCH"],
+                rule=f"/{name}/<{pk_type}:{pk}>",
+                methods=pk_methods or ["GET", "PATCH"],
             )

@@ -4,6 +4,7 @@ import uuid
 from flask import Blueprint, Response, request
 from flask_api import status
 from PIL import Image
+import numpy as np
 from server.faces.cosine_similarity import cosine_similarity
 from werkzeug.datastructures import FileStorage
 
@@ -32,18 +33,27 @@ class PhotosView(ApiView):
 
         if "url" in data:
             if data["url"].startswith("/static/"):
-                img = Image.open(Config.PROJECT_DIR + data["url"])
+                img = Image.open(Config.PUBLIC_DIR + data["url"])
             else:
-                img = Photo.get_image_arr_from_url(data["url"])
+                img = Photo.get_image_from_url(data["url"])
+
+            sha256_hash = Photo.get_sha256_hash(np.array(img))
+
+            obj = Photo.query.filter(Photo.sha256_hash == sha256_hash).first()
+            if obj:
+                return (
+                    {"error": "Photo already exist.", "data": obj.to_dict()},
+                    status.HTTP_409_CONFLICT,
+                )
 
             obj = Photo()
-            obj.create(img, url=data["url"])
+            obj.create(img, url=data["url"], sha256_hash=sha256_hash)
 
             if len(obj.faces) > 0:
                 self.db.session.add(obj)
                 self.db.session.commit()
 
-                return {"data": obj.to_dict()}
+                return obj.to_dict()
 
             return ({"error": "No faces found in picture."}, status.HTTP_204_NO_CONTENT)
 
@@ -51,6 +61,11 @@ class PhotosView(ApiView):
 
 
 class ImageFileView(ApiView):
+    """Image file hosting service
+
+    TODO: Set expiration date on files and clean up with cron jobs
+    """
+
     upload_folder = Config.UPLOAD_FOLDER
     allowed_extensions = Config.ALLOWED_EXTENSIONS
 
@@ -108,7 +123,7 @@ class ImageFileView(ApiView):
     @classmethod
     def register(cls, name: str, blueprint: Blueprint):
         return super().register(
-            name, blueprint, methods=["GET", "POST"], single_methods=["DELETE"]
+            name, blueprint, methods=["GET", "POST"], pk_methods=["DELETE"]
         )
 
 
@@ -119,7 +134,7 @@ class FaceSearchView(ApiView):
         if not url:
             return {"error": "Image URL not provided."}, status.HTTP_400_BAD_REQUEST
 
-        return {"data": self.search(url)}, status.HTTP_200_OK
+        return self.search(url), status.HTTP_200_OK
 
     def put(self):
         data = request.json
@@ -127,12 +142,12 @@ class FaceSearchView(ApiView):
         if not data["url"]:
             return {"error": "Image URL not provided."}, status.HTTP_400_BAD_REQUEST
 
-        return {"data": self.search(data["url"])}, status.HTTP_200_OK
+        return self.search(data["url"]), status.HTTP_200_OK
 
     @staticmethod
     def search(url):
         obj = Photo()
-        image_arr = Photo.get_image_arr_from_url(url)
+        image_arr = Photo.get_image_from_url(url)
         obj.create(image_arr)
 
         # calculate cosine distance to all face in database

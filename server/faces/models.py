@@ -96,13 +96,13 @@ class Photo(db.Model, ModelBaseMixin):
     url = db.Column(db.String)
     width = db.Column(db.Integer, nullable=False)
     height = db.Column(db.Integer, nullable=False)
-    sha256_hash = db.Column(db.String, unique=True)
+    sha256_hash = db.Column(db.String(256), unique=True)
 
-    def create(self, image, url=None) -> "Photo":
+    def create(self, image: Image, url: str = None, sha256_hash: str = None) -> "Photo":
         img_arr = np.array(image)
 
         self.width, self.height = image.size
-        self.sha256_hash = hashlib.sha256(image.tobytes()).hexdigest()
+        self.sha256_hash = sha256_hash or self.get_sha256_hash(image)
 
         if url is None:
             self.id = uuid.uuid4()
@@ -124,7 +124,11 @@ class Photo(db.Model, ModelBaseMixin):
         return img_arr
 
     @staticmethod
-    def get_image_arr_from_url(url):
+    def get_sha256_hash(image: np.ndarray) -> str:
+        return hashlib.sha256(image.tobytes()).hexdigest()
+
+    @staticmethod
+    def get_image_from_url(url: str) -> Image:
         res = requests.get(url)
         image = Image.open(BytesIO(res.content))
         return image
