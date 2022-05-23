@@ -12,9 +12,7 @@ from flask_migrate import Migrate
 from .config import Config
 from .database import db
 from .faces.models import *  # noqa
-from .legacy.commands import build_cli, data_cli, dev_cli
 from .legacy.schema import schema
-from .legacy.taskmanager import manager as task_manager
 from .theme import theme as theme_bp
 
 dictConfig(yaml.load(open(Config.PROJECT_DIR + "/logging.yaml"), yaml.FullLoader))
@@ -41,9 +39,6 @@ db.init_app(app)
 
 # Setup migration
 migrate = Migrate(app, db, directory=app.config["MIGRATION_DIR"])
-
-# Setup task manager
-task_manager.init_app(app)
 
 
 for name in ["core", "faces", "search", "scrapper"]:
@@ -72,13 +67,6 @@ def graphql():
 
         status_code = 200 if success else 400
         return jsonify(result), status_code
-
-
-# TODO: Remove
-# Register CLI Groups
-app.cli.add_command(build_cli)
-app.cli.add_command(data_cli)
-app.cli.add_command(dev_cli)
 
 
 @app.shell_context_processor
