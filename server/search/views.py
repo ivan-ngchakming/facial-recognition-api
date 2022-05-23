@@ -41,7 +41,7 @@ class FaceSearchView(ApiView):
                 cls.db.session.rollback()
                 obj = Photo.query.filter(Photo.url == url).first()
 
-        search_results = search_face(obj)
+        search_results = search_face(obj, exclude_urls=[url])
 
         for i, results in enumerate(search_results):
             if len(results) > 10:
