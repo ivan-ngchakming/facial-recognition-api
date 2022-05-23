@@ -22,7 +22,7 @@ class FaceApp(FaceAnalysis):
             allowed_modules=self.allowed_modules,
             **self.kwargs
         )
-        super().prepare(ctx_id=0, det_size=(640, 640))
+        super().prepare(ctx_id=0, det_thresh=0.5, det_size=(640, 640))
         self.initialized = True
 
     def get(self, *args, **kwargs):

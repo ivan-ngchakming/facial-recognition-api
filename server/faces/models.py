@@ -8,7 +8,7 @@ import numpy as np
 import requests
 from PIL import Image
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import backref
+from sqlalchemy.orm import backref, deferred
 
 from ..core.model_base import ModelBaseMixin
 from ..database import db
@@ -80,8 +80,8 @@ class Face(db.Model, ModelBaseMixin):
         "-landmarks",
     )
 
-    location = db.Column(db.PickleType, nullable=False)
-    landmarks = db.Column(db.PickleType, nullable=False)
+    location = deferred(db.Column(db.PickleType, nullable=False))
+    landmarks = deferred(db.Column(db.PickleType, nullable=False))
     encoding = db.Column(db.PickleType, nullable=False)
 
     # Many-to-one relationship

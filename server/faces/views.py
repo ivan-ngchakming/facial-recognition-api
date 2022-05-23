@@ -199,7 +199,8 @@ class FaceSearchView(ApiView):
                 
                 if score > 0.1:
                     current_results.append({"face": face, "score": float(score)})
-                    current_results.sort(key=lambda x: x["score"], reverse=True)
+                
+            current_results.sort(key=lambda x: x["score"], reverse=True)
             
             if len(current_results) > 10:
                 current_results = current_results[:10]
