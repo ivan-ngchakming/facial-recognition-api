@@ -12,20 +12,8 @@ class Profile(db.Model, ModelBaseMixin):
     first_name = db.Column(db.String(100))
     middle_name = db.Column(db.String(100))
     last_name = db.Column(db.String(100))
-
     sex = db.Column(db.String(10))
-
     birth = db.Column(db.Date())
-
-    # One-to-one relationship
-    thumbnail_id = db.Column(UUID(as_uuid=True), db.ForeignKey("face.id"))
-    thumbnail = db.relationship(
-        "Face",
-        uselist=False,
-        foreign_keys=thumbnail_id,
-        primaryjoin="Profile.thumbnail_id==Face.id",
-        post_update=True,
-    )
 
     def to_dict(self, *args, **kwargs):
         obj_dict = super().to_dict(*args, **kwargs)
