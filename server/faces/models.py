@@ -1,8 +1,8 @@
 import hashlib
 import logging
-from typing import List
 import uuid
 from io import BytesIO
+from typing import List
 
 import cv2
 import numpy as np
@@ -96,11 +96,7 @@ class Face(db.Model, ModelBaseMixin):
 
     # Many-to-one relationship
     photo_id = db.Column(UUID(as_uuid=True), db.ForeignKey("photo.id"))
-    photo: "Photo" = db.relationship(
-        "Photo",
-        uselist=False,
-        # backref=backref("faces", cascade="all,delete,delete-orphan"),
-    )
+    photo: "Photo" = db.relationship("Photo", uselist=False)
 
 
 class Photo(db.Model, ModelBaseMixin):
@@ -108,7 +104,7 @@ class Photo(db.Model, ModelBaseMixin):
 
     serialize_rules = ("-faces.photo",)
 
-    url = db.Column(db.String)
+    url = db.Column(db.String, unique=True)
     width = db.Column(db.Integer, nullable=False)
     height = db.Column(db.Integer, nullable=False)
     sha256_hash = db.Column(db.String(256), unique=True)
