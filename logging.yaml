@@ -1,0 +1,22 @@
+# Flask Server logging configuration
+
+version: 1
+
+disable_existing_loggers: true
+
+formatters:
+  default:
+    format: '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
+  console:
+    class: server.logging_utils.CustomFormatter
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: console
+    stream: ext://sys.stdout
+
+root:
+  level: INFO
+  handlers: [console]

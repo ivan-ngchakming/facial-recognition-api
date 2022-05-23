@@ -5,7 +5,6 @@ from flask import Blueprint, Response, request
 from flask_api import status
 from PIL import Image
 import numpy as np
-from server.faces.cosine_similarity import cosine_similarity
 from werkzeug.datastructures import FileStorage
 
 from ..config import Config
@@ -164,59 +163,6 @@ class ImageFileView(ApiView):
         )
 
 
-class FaceSearchView(ApiView):
-    def get(self):
-        url = request.args.get("url")
-
-        if not url:
-            return {"error": "Image URL not provided."}, status.HTTP_400_BAD_REQUEST
-
-        return self.search(url), status.HTTP_200_OK
-
-    def put(self):
-        data = request.json
-
-        if not data["url"]:
-            return {"error": "Image URL not provided."}, status.HTTP_400_BAD_REQUEST
-
-        return self.search(data["url"]), status.HTTP_200_OK
-
-    @staticmethod
-    def search(url):
-        obj = Photo()
-        image_arr = Photo.get_image_from_url(url)
-        obj.create(image_arr)
-
-        # calculate cosine distance to all face in database
-        # TODO: use numpy vectorized operation to speed up consine distance calculation
-        # TODO: Use k-NN algorithm to speed up search time
-        faces = Face.query.all()
-        results = []
-        for face_to_search in obj.faces:
-            current_results = []
-            for face in faces:
-                score = cosine_similarity(face.encoding, face_to_search.encoding)
-
-                if score > 0.1:
-                    current_results.append({"face": face, "score": float(score)})
-
-            current_results.sort(key=lambda x: x["score"], reverse=True)
-
-            if len(current_results) > 10:
-                current_results = current_results[:10]
-
-            for current_result in current_results:
-                current_result["face"] = current_result["face"].to_dict()
-
-            results.append(current_results)
-
-        return results
-
-    @classmethod
-    def register(cls, name: str, blueprint: Blueprint):
-        return super().register(name, blueprint, methods=["GET", "PUT"], pk_methods=[])
-
-
 blueprint = Blueprint("faces", __name__)
 
 FaceView.register("faces", blueprint)
@@ -224,4 +170,3 @@ ProfileView.register("profiles", blueprint)
 ProfileAttributeView.register("profile-attributes", blueprint)
 PhotosView.register("photos", blueprint)
 ImageFileView.register("photo-upload", blueprint)
-FaceSearchView.register("face-search", blueprint)

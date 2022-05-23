@@ -1,3 +1,7 @@
+import io
+import sys
+import warnings
+
 from .cosine_similarity import *  # noqa
 
 from insightface.app import FaceAnalysis
@@ -16,6 +20,9 @@ class FaceApp(FaceAnalysis):
         self.initialized = False
 
     def init(self):
+        text_trap = io.StringIO()
+        sys.stdout = text_trap
+
         super().__init__(
             name=self.name,
             root=self.root,
@@ -25,10 +32,15 @@ class FaceApp(FaceAnalysis):
         super().prepare(ctx_id=0, det_thresh=0.5, det_size=(640, 640))
         self.initialized = True
 
+        sys.stdout = sys.__stdout__
+
     def get(self, *args, **kwargs):
         if not self.initialized:
             self.init()
-        return super().get(*args, **kwargs)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter(action="ignore", category=FutureWarning)
+            return super().get(*args, **kwargs)
 
 
 face_app = FaceApp(root=Config.PUBLIC_DIR)
