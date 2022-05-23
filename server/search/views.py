@@ -31,12 +31,12 @@ class FaceSearchView(ApiView):
 
         search_results = search_face(obj)
 
-        for results in search_results:
+        for i, results in enumerate(search_results):
             if len(results) > 10:
-                results = results[:10]
+                search_results[i] = results[:10]
 
-            for result in results:
-                result["face"] = result["face"].to_dict()
+            for j, result in enumerate(search_results[i]):
+                search_results[i][j]["face"] = result["face"].to_dict()
 
         return search_results
 
