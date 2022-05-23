@@ -2,17 +2,12 @@ import importlib
 from logging.config import dictConfig
 
 import yaml
-from ariadne import graphql_sync
-from ariadne.constants import PLAYGROUND_HTML
-from flask import jsonify, request
 from flask_api import FlaskAPI
 from flask_cors import CORS
 from flask_migrate import Migrate
 
 from .config import Config
 from .database import db
-from .faces.models import *  # noqa
-from .legacy.schema import schema
 from .theme import theme as theme_bp
 
 # TODO: Disable file loggers in development environment
@@ -41,32 +36,25 @@ db.init_app(app)
 migrate = Migrate(app, db, directory=app.config["MIGRATION_DIR"])
 
 
-for name in ["core", "faces", "search", "scrapper"]:
-    mod = importlib.import_module(f".{name}.views", "server")
-    app.register_blueprint(mod.blueprint)
+for name in ["core", "faces", "search", "scrapper", "profiles"]:
+    try:
+        importlib.import_module(f".{name}.models", "server")
+    except ModuleNotFoundError:
+        app.logger.debug(f"{name} does not have a models.py file")
+
+    try:
+        mod = importlib.import_module(f".{name}.views", "server")
+    except ModuleNotFoundError:
+        app.logger.debug(f"{name} does not have a views.py file")
+
+    try:
+        app.register_blueprint(mod.blueprint)
+    except AttributeError:
+        app.logger.debug(f"{name} does not have a blueprint.py file")
 
 
 # override browsable api views
 app.blueprints["flask-api"] = theme_bp
-
-
-# TODO: remove
-@app.route("/graphql", methods=["GET", "POST"])
-def graphql():
-    if request.method == "GET":
-        return PLAYGROUND_HTML, 200
-    else:
-        # GraphQL queries are always sent as POST
-        data = request.get_json()
-
-        # Note: Passing the request to the context is optional.
-        # In Flask, the current request is always accessible as flask.request
-        success, result = graphql_sync(
-            schema, data, context_value=request, debug=app.debug
-        )
-
-        status_code = 200 if success else 400
-        return jsonify(result), status_code
 
 
 @app.shell_context_processor
