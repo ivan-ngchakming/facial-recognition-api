@@ -196,8 +196,17 @@ class FaceSearchView(ApiView):
             current_results = []
             for face in faces:
                 score = cosine_similarity(face.encoding, face_to_search.encoding)
-                current_results.append({"face": face.to_dict(), "score": float(score)})
-                current_results.sort(key=lambda x: x["score"], reverse=True)
+                
+                if score > 0.1:
+                    current_results.append({"face": face, "score": float(score)})
+                    current_results.sort(key=lambda x: x["score"], reverse=True)
+            
+            if len(current_results) > 10:
+                current_results = current_results[:10]
+                
+            for current_result in current_results:
+                current_result["face"] = current_result["face"].to_dict()
+
             results.append(current_results)
 
         return results
