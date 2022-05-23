@@ -1,10 +1,11 @@
 from flask_api import status
 from sqlalchemy import inspect
 
+from server.profiles.controllers import update_profile_attributes
+
 from ..database import db
 from ..faces.models import Photo
 from ..profiles.models import Profile
-from ..faces.views import ProfileView
 from ..search.services import search_face
 
 
@@ -56,7 +57,7 @@ def process_scrapped_data(data: dict, threshold=0.6) -> tuple:
         for column in inspect(Profile).attrs:
             if column.key == "attributes":
                 if "attributes" in data:
-                    profile_obj = ProfileView.update_attributes(
+                    profile_obj = update_profile_attributes(
                         profile_obj, data["attributes"]
                     )
                 continue

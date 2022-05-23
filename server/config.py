@@ -32,3 +32,10 @@ class Config(object):
     ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 
     INIT_TASK_WORKERS = 2
+
+
+class TestingConfig(Config):
+    TESTING = (True,)
+    SQLALCHEMY_DATABASE_URI = (
+        f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}-test"
+    )
