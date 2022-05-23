@@ -196,15 +196,15 @@ class FaceSearchView(ApiView):
             current_results = []
             for face in faces:
                 score = cosine_similarity(face.encoding, face_to_search.encoding)
-                
+
                 if score > 0.1:
                     current_results.append({"face": face, "score": float(score)})
-                
+
             current_results.sort(key=lambda x: x["score"], reverse=True)
-            
+
             if len(current_results) > 10:
                 current_results = current_results[:10]
-                
+
             for current_result in current_results:
                 current_result["face"] = current_result["face"].to_dict()
 
@@ -214,7 +214,7 @@ class FaceSearchView(ApiView):
 
     @classmethod
     def register(cls, name: str, blueprint: Blueprint):
-        return super().register(name, blueprint, methods=["GET", "PUT"])
+        return super().register(name, blueprint, methods=["GET", "PUT"], pk_methods=[])
 
 
 blueprint = Blueprint("faces", __name__)

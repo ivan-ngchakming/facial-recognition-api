@@ -83,7 +83,7 @@ class ApiView(MethodView):
         self.db.session.add(obj)
         self.db.session.commit()
 
-        return obj.to_dict()
+        return obj.to_dict(), status.HTTP_201_CREATED
 
     def patch(self, id: str = None, obj=None, excludes=None) -> Response:
         data = request.json
@@ -109,6 +109,16 @@ class ApiView(MethodView):
             )
 
         return obj.to_dict()
+
+    def delete(self, id: str = None) -> Response:
+        if id is None:
+            # TODO: Implement batch delete
+            pass
+
+        obj = self.model.query.get(id)
+        self.db.session.delete(obj)
+        self.db.session.commit()
+        return obj.to_dict(), status.HTTP_200_OK
 
     def _update_obj(
         self, obj: Model, data: dict, update_id: bool = False, excludes: list = None
@@ -253,5 +263,5 @@ class ApiView(MethodView):
             blueprint.add_url_rule(
                 view_func=view_func,
                 rule=f"/{name}/<{pk_type}:{pk}>",
-                methods=pk_methods or ["GET", "PATCH"],
+                methods=pk_methods or ["GET", "PATCH", "DELETE"],
             )
