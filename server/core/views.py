@@ -1,6 +1,6 @@
 import git
 import platform
-from flask import Blueprint
+from flask import Blueprint, current_app
 
 
 from . import controller
@@ -14,7 +14,11 @@ blueprint = Blueprint("core", __name__)
 @blueprint.route("/")
 def index():
     sha = repo.head.object.hexsha
-    return {"version": "dev", "sha": sha, "platform": platform.platform()}
+    return {
+        "version": current_app.config["ENV"],
+        "sha": sha,
+        "platform": platform.platform(),
+    }
 
 
 @blueprint.route("/memory")
