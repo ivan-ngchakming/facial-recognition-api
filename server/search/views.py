@@ -1,11 +1,12 @@
-from flask import Blueprint, current_app, request
+from flask import Blueprint, current_app, request, abort, make_response
 from flask_api import status
-from server.scrapper.services import process_scrapped_data
-from server.search.services import search_face
+from requests.exceptions import MissingSchema
 from sqlalchemy.exc import IntegrityError
 
 from ..core.api_view import ApiView
 from ..faces.models import Photo
+from ..scrapper.services import process_scrapped_data
+from .services import search_face
 
 
 class FaceSearchView(ApiView):
@@ -29,7 +30,10 @@ class FaceSearchView(ApiView):
     def search(cls, url: str):
         if url.startswith("/static/"):
             obj = Photo()
-            image_arr = Photo.get_image_from_url(url)
+            try:
+                image_arr = Photo.get_image_from_url(url)
+            except MissingSchema as error:
+                abort(make_response({"error": str(error)}, status.HTTP_400_BAD_REQUEST))
             obj.create(image_arr)
         else:
             try:
@@ -40,6 +44,8 @@ class FaceSearchView(ApiView):
                 )
                 cls.db.session.rollback()
                 obj = Photo.query.filter(Photo.url == url).first()
+            except MissingSchema as error:
+                abort(make_response({"error": str(error)}, status.HTTP_400_BAD_REQUEST))
 
         search_results = search_face(obj, exclude_urls=[url])
 
