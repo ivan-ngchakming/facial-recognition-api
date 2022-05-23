@@ -15,8 +15,8 @@ from .faces.models import *  # noqa
 from .legacy.schema import schema
 from .theme import theme as theme_bp
 
+# TODO: Disable file loggers in development environment
 dictConfig(yaml.load(open(Config.PROJECT_DIR + "/logging.yaml"), yaml.FullLoader))
-
 
 app = FlaskAPI(
     __name__, static_folder=f"{Config.PROJECT_DIR}/public", static_url_path="/"
