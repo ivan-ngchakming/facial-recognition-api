@@ -43,17 +43,23 @@ class ProfileView(ApiView):
             obj = self.model.query.get(id)
 
         if "attributes" in data:
-            for key, value in data["attributes"].items():
-                updated = False
-                for attribute_obj in obj.attributes:
-                    if key == attribute_obj.key:
-                        attribute_obj.value = value
-                        updated = True
-                        break
-                if not updated:
-                    obj.attributes.append(ProfileAttribute(key=key, value=value))
+            obj = self.update_attributes(obj, data["attributes"])
 
         return super().post(obj=obj, excludes=["attributes"])
+
+    @staticmethod
+    def update_attributes(obj, attributes):
+        for key, value in attributes.items():
+            updated = False
+            for attribute_obj in obj.attributes:
+                if key == attribute_obj.key:
+                    attribute_obj.value = value
+                    updated = True
+                    break
+            if not updated:
+                obj.attributes.append(ProfileAttribute(key=key, value=value))
+
+        return obj
 
 
 class ProfileAttributeView(ApiView):

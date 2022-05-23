@@ -1,5 +1,6 @@
 import hashlib
 import logging
+from typing import List
 import uuid
 from io import BytesIO
 
@@ -8,7 +9,7 @@ import numpy as np
 import requests
 from PIL import Image
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import backref, deferred
+from sqlalchemy.orm import deferred
 
 from ..core.model_base import ModelBaseMixin
 from ..database import db
@@ -65,7 +66,7 @@ class ProfileAttribute(db.Model, ModelBaseMixin):
         "Profile",
         uselist=False,
         foreign_keys=profile_id,
-        backref=db.backref("attributes", cascade="all,delete"),
+        backref=db.backref("attributes"),
     )
 
 
@@ -86,7 +87,7 @@ class Face(db.Model, ModelBaseMixin):
 
     # Many-to-one relationship
     profile_id = db.Column(UUID(as_uuid=True), db.ForeignKey("profile.id"))
-    profile = db.relationship(
+    profile: Profile = db.relationship(
         "Profile",
         uselist=False,
         backref=db.backref("faces", cascade="all,delete"),
@@ -95,10 +96,10 @@ class Face(db.Model, ModelBaseMixin):
 
     # Many-to-one relationship
     photo_id = db.Column(UUID(as_uuid=True), db.ForeignKey("photo.id"))
-    photo = db.relationship(
+    photo: "Photo" = db.relationship(
         "Photo",
         uselist=False,
-        backref=backref("faces", cascade="all,delete,delete-orphan"),
+        # backref=backref("faces", cascade="all,delete,delete-orphan"),
     )
 
 
@@ -111,6 +112,10 @@ class Photo(db.Model, ModelBaseMixin):
     width = db.Column(db.Integer, nullable=False)
     height = db.Column(db.Integer, nullable=False)
     sha256_hash = db.Column(db.String(256), unique=True)
+
+    faces: List[Face] = db.relationship(
+        "Face", uselist=True, cascade="all,delete,delete-orphan", overlaps="photo"
+    )
 
     def create(self, image: Image, url: str = None, sha256_hash: str = None) -> "Photo":
         img_arr = np.array(image)

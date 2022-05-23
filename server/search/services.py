@@ -2,7 +2,26 @@ from server.faces.cosine_similarity import cosine_similarity
 from server.faces.models import Photo, Face
 
 
-def search_face(photo_obj: Photo):
+def search_face(photo_obj: Photo, threshold=0.1):
+    """Search input photo against all faces in database.
+
+    example results:
+
+        ```
+        [
+            [obj, ...],  # face 1 matches
+            [obj, ...],  # face 2 matches
+            ...
+        ]
+        ```
+
+    Args:
+        photo_obj (Photo): photo to search
+        threshold (float, optional): minimum score to consider a match. Defaults to 0.1.
+
+    Returns:
+        list: _description_
+    """
     # calculate cosine distance to all face in database
     # TODO: use numpy vectorized operation to speed up consine distance calculation
     # TODO: Use k-NN algorithm to speed up search time
@@ -14,8 +33,7 @@ def search_face(photo_obj: Photo):
             # TODO: investigate if batch cosine similarity calculation would be faster
             score = cosine_similarity(face.encoding, face_to_search.encoding)
 
-            # TODO: allow configurable threshold
-            if score > 0.1:
+            if score > threshold:
                 current_results.append({"face": face, "score": float(score)})
 
         # TODO: Use faster sorting algorithm
