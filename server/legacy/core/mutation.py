@@ -5,7 +5,8 @@ from ariadne import MutationType, convert_kwargs_to_snake_case
 
 from ...config import Config
 from ...database import db
-from ...faces.models import Face, Photo, Profile
+from ...faces.models import Face, Photo
+from ...profiles.models import Profile
 from ..utils.image import decode_img
 
 logger = logging.getLogger(__name__)

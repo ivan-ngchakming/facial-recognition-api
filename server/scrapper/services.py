@@ -2,7 +2,8 @@ from flask_api import status
 from sqlalchemy import inspect
 
 from ..database import db
-from ..faces.models import Photo, Profile
+from ..faces.models import Photo
+from ..profiles.models import Profile
 from ..faces.views import ProfileView
 from ..search.services import search_face
 

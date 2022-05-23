@@ -9,7 +9,8 @@ from werkzeug.datastructures import FileStorage
 
 from ..config import Config
 from ..core.api_view import ApiView
-from .models import Face, Photo, Profile, ProfileAttribute
+from .models import Face, Photo
+from ..profiles.models import Profile, ProfileAttribute
 
 
 class FaceView(ApiView):
