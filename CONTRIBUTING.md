@@ -14,7 +14,7 @@
 * Generate migration files using `flask db migrate -m "migration message"` upon any changes to data models.
 
 * If possible, submit tests to your patch / new feature so it can be tested easily.
-* Run tests using tox or pytest, get test coverage using coverage.
+* Run tests using pytest, get test coverage using coverage.
 * Assure nothing is broken by running all the tests.
 
 * Serve and test the production server using gunicorn: `gunicorn server:app` (optional)

@@ -3,17 +3,19 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = os.getenv("DB_PORT")
-DB_NAME = os.getenv("DB_NAME")
-DB_USERNAME = os.getenv("DB_USERNAME")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_HOST = os.getenv("DB_HOST") or "localhost"
+DB_PORT = os.getenv("DB_PORT") or 5432
+DB_NAME = os.getenv("DB_NAME") or "facial-recognition"
+DB_USERNAME = os.getenv("DB_USERNAME") or "postgres"
+DB_PASSWORD = os.getenv("DB_PASSWORD") or "postgres"
 
 
 class Config(object):
     """
     Default flask configuration object
     """
+
+    TESTING = False
 
     SECRET_KEY = os.urandom(24)
 
@@ -35,7 +37,7 @@ class Config(object):
 
 
 class TestingConfig(Config):
-    TESTING = (True,)
+    TESTING = True
     SQLALCHEMY_DATABASE_URI = (
         f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}-test"
     )

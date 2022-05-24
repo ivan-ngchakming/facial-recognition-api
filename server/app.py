@@ -1,7 +1,5 @@
 import importlib
-from logging.config import dictConfig
 
-import yaml
 from flask_api import FlaskAPI
 from flask_cors import CORS
 from flask_migrate import Migrate
@@ -9,9 +7,6 @@ from flask_migrate import Migrate
 from .config import Config
 from .database import db
 from .theme import theme as theme_bp
-
-# TODO: Disable file loggers in development environment
-dictConfig(yaml.load(open(Config.PROJECT_DIR + "/logging.yaml"), yaml.FullLoader))
 
 
 def create_app(config=Config) -> FlaskAPI:
