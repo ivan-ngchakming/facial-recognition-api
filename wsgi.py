@@ -1,12 +1,4 @@
-from logging.config import dictConfig
-
-import yaml
-
 from server import app
-from server.config import Config
-
-# TODO: Disable file loggers in development environment
-dictConfig(yaml.load(open(Config.PROJECT_DIR + "/logging.yaml"), yaml.FullLoader))
 
 if __name__ == "__main__":
     import argparse

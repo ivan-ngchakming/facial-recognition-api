@@ -1,5 +1,7 @@
 import importlib
+from logging.config import dictConfig
 
+import yaml
 from flask_api import FlaskAPI
 from flask_cors import CORS
 from flask_migrate import Migrate
@@ -10,6 +12,18 @@ from .theme import theme as theme_bp
 
 
 def create_app(config=Config) -> FlaskAPI:
+    # logging configurations
+    loggingConfig = yaml.load(
+        open(Config.PROJECT_DIR + "/logging.yaml"), yaml.FullLoader
+    )
+
+    if config.ENV != "production":
+        loggingConfig["root"]["handlers"].remove("info_file")
+        loggingConfig["root"]["handlers"].remove("error_file")
+        print(loggingConfig)
+
+    dictConfig(loggingConfig)
+
     app = FlaskAPI(
         __name__, static_folder=f"{Config.PROJECT_DIR}/public", static_url_path="/"
     )

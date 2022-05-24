@@ -10,12 +10,14 @@ DB_USERNAME = os.getenv("DB_USERNAME") or "postgres"
 DB_PASSWORD = os.getenv("DB_PASSWORD") or "postgres"
 
 
-class Config(object):
+class Config:
     """
     Default flask configuration object
     """
 
     TESTING = False
+
+    ENV = os.getenv("FLASK_ENV") or "development"
 
     SECRET_KEY = os.urandom(24)
 
