@@ -28,13 +28,18 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
-    - name: Use cache
+    - name: Cache virtual environment
       uses: actions/cache@v3
       with:
         path: |
           ~/.local/share/virtualenvs
           .tox/py38/.pytest_cache
         key: ${{ runner.os }}-python-${{ steps.setup-python.outputs.python-version }}-pipenv-${{ hashFiles('Pipfile.lock') }}
+    - name: Cache facial recognition models
+      uses: actions/cache@v3
+      with:
+        path: "public/models"
+        key: buffalo_l_2022_05_24
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
