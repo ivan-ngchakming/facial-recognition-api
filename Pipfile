@@ -23,6 +23,7 @@ flask-api = "*"
 sqlalchemy-serializer = "*"
 black = "*"
 gitpython = "*"
+tox = "*"
 
 [dev-packages]
 pre-commit = "*"

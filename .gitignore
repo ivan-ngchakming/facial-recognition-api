@@ -1,9 +1,16 @@
+# IDE
 __pycache__/
-.env
 .vscode
 
+# Testing
+*.db
+*_backup
+.coverage
+.pytest_cache
+.tox
+
+# Project Environment and Runtime Files
+.env
 /public
 /assets
 /logs
-
-*.db
