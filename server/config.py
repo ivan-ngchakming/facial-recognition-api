@@ -25,7 +25,7 @@ class Config(object):
         f"postgresql://{DB_USERNAME}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    MIGRATION_DIR = BASE_DIR + "/migrations"
+    MIGRATION_DIR = PROJECT_DIR + "/migrations"
 
     # File upload
     UPLOAD_FOLDER = f"{PROJECT_DIR}/public/static"
