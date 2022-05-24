@@ -1,9 +1,9 @@
-import git
 import platform
+
+import git
 from flask import Blueprint, current_app
 
-
-from . import controller
+from .utils import get_memory
 
 repo = git.Repo(search_parent_directories=True)
 
@@ -23,4 +23,18 @@ def index():
 
 @blueprint.route("/memory")
 def print_memory():
-    return {"memory": controller.get_memory(), "unit": "mb"}
+    return {"memory": get_memory(), "unit": "mb"}
+
+
+@blueprint.route("/site-map")
+def site_map():
+    res = []
+    for url in current_app.url_map.iter_rules():
+        specs = {
+            "endpoint": url.endpoint,
+            "rule": url.rule,
+            "methods": list(url.methods),
+        }
+        res.append(specs)
+
+    return res

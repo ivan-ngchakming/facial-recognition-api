@@ -115,7 +115,7 @@ class ImageFileView(ApiView):
         )
 
 
-blueprint = Blueprint("photos", __name__)
+blueprint = Blueprint("photos", __name__, url_prefix="/photos")
 
 PhotosView.register("", blueprint)
 ImageFileView.register("upload", blueprint)

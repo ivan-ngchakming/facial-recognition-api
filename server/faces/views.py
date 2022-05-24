@@ -68,7 +68,7 @@ class FaceSearchView(ApiView):
         return super().register(name, blueprint, methods=["GET", "PUT"], pk_methods=[])
 
 
-blueprint = Blueprint("faces", __name__)
+blueprint = Blueprint("faces", __name__, url_prefix="/faces")
 
 FaceView.register("", blueprint)
 FaceSearchView.register("search", blueprint)
