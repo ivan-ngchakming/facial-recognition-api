@@ -1,5 +1,7 @@
+import errno
 import importlib
 from logging.config import dictConfig
+import os
 
 import yaml
 from flask_api import FlaskAPI
@@ -18,9 +20,20 @@ def create_app(config=Config) -> FlaskAPI:
     )
 
     if config.ENV != "production":
+        to_remove = []
+        for key in loggingConfig["handlers"]:
+            if key.endswith("_file"):
+                to_remove.append(key)
+        for key in to_remove:
+            loggingConfig["handlers"].pop(key)
         loggingConfig["root"]["handlers"].remove("info_file")
         loggingConfig["root"]["handlers"].remove("error_file")
-        print(loggingConfig)
+    else:
+        try:
+            os.makedirs("logs")
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                raise
 
     dictConfig(loggingConfig)
 
