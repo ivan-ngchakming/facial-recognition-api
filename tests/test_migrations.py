@@ -1,18 +1,5 @@
-import pytest
 from alembic.config import Config
-from alembic.script import ScriptDirectory
 from flask_migrate import downgrade, stamp, upgrade
-
-
-@pytest.mark.skip
-def test_only_single_head_revision_in_migrations(app):
-    with app.app_context():
-        config = Config()
-        config.set_main_option("script_location", "migrations")
-        script = ScriptDirectory.from_config(config)
-
-        head = script.get_current_head()
-        revision = script.get_revision(head)
 
 
 def test_all_migrations_pass(app_empty_db):

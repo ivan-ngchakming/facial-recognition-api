@@ -14,6 +14,8 @@ class Profile(db.Model, ModelBaseMixin):
     last_name = db.Column(db.String(100))
     sex = db.Column(db.String(10))
     birth = db.Column(db.Date())
+    source = db.Column(db.String(50))
+    test = db.Column(db.String(50))
 
     def to_dict(self, *args, **kwargs):
         obj_dict = super().to_dict(*args, **kwargs)
