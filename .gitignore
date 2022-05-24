@@ -3,7 +3,6 @@ __pycache__/
 .vscode
 
 # Testing
-*.db
 *_backup
 .coverage
 .pytest_cache
