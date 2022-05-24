@@ -1,5 +1,6 @@
-from server.faces.cosine_similarity import cosine_similarity
-from server.faces.models import Photo, Face
+from ..photos.models import Photo
+from .cosine_similarity import cosine_similarity
+from .models import Face
 
 
 def search_face(photo_obj: Photo, threshold=0.1, exclude_urls=None):

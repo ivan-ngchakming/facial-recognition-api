@@ -1,126 +1,74 @@
-import os
-import uuid
-
-from flask import Blueprint, Response, request
+from flask import Blueprint, abort, current_app, make_response, request
 from flask_api import status
-from PIL import Image
-import numpy as np
-from werkzeug.datastructures import FileStorage
+from requests.exceptions import MissingSchema
+from sqlalchemy.exc import IntegrityError
 
-from ..config import Config
 from ..core.api_view import ApiView
-from .models import Face, Photo
+from ..photos.models import Photo
+from ..scrapper.services import process_scrapped_data
+from .models import Face
+from .services import search_face
 
 
 class FaceView(ApiView):
     model = Face
 
 
-class PhotosView(ApiView):
-    model = Photo
+class FaceSearchView(ApiView):
+    def get(self):
+        url = request.args.get("url")
 
-    def post(self):
+        if not url:
+            return {"error": "Image URL not provided."}, status.HTTP_400_BAD_REQUEST
+
+        return self.search(url), status.HTTP_200_OK
+
+    def put(self):
         data = request.json
 
-        if "url" in data:
-            if data["url"].startswith("/static/"):
-                img = Image.open(Config.PUBLIC_DIR + data["url"])
-            else:
-                img = Photo.get_image_from_url(data["url"])
+        if not data["url"]:
+            return {"error": "Image URL not provided."}, status.HTTP_400_BAD_REQUEST
 
-            sha256_hash = Photo.get_sha256_hash(np.array(img))
+        return self.search(data["url"]), status.HTTP_200_OK
 
-            obj = Photo.query.filter(Photo.sha256_hash == sha256_hash).first()
-            if obj:
-                return (
-                    {"error": "Photo already exist.", "data": obj.to_dict()},
-                    status.HTTP_409_CONFLICT,
-                )
-
+    @classmethod
+    def search(cls, url: str):
+        if url.startswith("/static/"):
             obj = Photo()
-            obj.create(img, url=data["url"], sha256_hash=sha256_hash)
-
-            if len(obj.faces) > 0:
-                self.db.session.add(obj)
-                self.db.session.commit()
-
-                return obj.to_dict()
-
-            return ({"error": "No faces found in picture."}, status.HTTP_204_NO_CONTENT)
-
-        return {"error": "Image url not provided"}, status.HTTP_400_BAD_REQUEST
-
-
-class ImageFileView(ApiView):
-    """Image file hosting service
-
-    TODO: Set expiration date on files and clean up with cron jobs
-    TODO: Create Image file model to persist image file meta data to database
-    """
-
-    upload_folder = Config.UPLOAD_FOLDER
-    allowed_extensions = Config.ALLOWED_EXTENSIONS
-
-    def get(self) -> Response:
-        return {}
-
-    def post(self) -> Response:
-        """Upload a new image to `/public` directory of the project"""
-
-        # check if the post request has the file part
-        if "file" not in request.files:
-            return {"error": "File not provided"}, status.HTTP_400_BAD_REQUEST
-
-        file = request.files["file"]
-        # If the user does not select a file, the browser submits an
-        # empty file without a filename.
-        if file.filename == "" or not file:
-            return {"error": "File not selected"}, status.HTTP_400_BAD_REQUEST
-
-        if not self.allowed_file(file.filename):
-            return (
-                {"error": f"File extension {self.get_file_extension(file.filename)}"},
-                status.HTTP_400_BAD_REQUEST,
-            )
-
-        filename = self.upload(file)
-        return {"url": f"/static/{filename}"}, status.HTTP_201_CREATED
-
-    def delete(self, filename: str) -> Response:
-        full_filename = self.upload_folder + "/" + filename
-
-        if os.path.exists(full_filename):
-            os.remove(full_filename)
-            return {"success": "File successfully removed"}, status.HTTP_200_OK
+            try:
+                image_arr = Photo.get_image_from_url(url)
+            except MissingSchema as error:
+                abort(make_response({"error": str(error)}, status.HTTP_400_BAD_REQUEST))
+            obj.create(image_arr)
         else:
-            return {"error": "File does not exist"}, status.HTTP_204_NO_CONTENT
+            try:
+                obj, _, _ = process_scrapped_data({"url": url})
+            except IntegrityError:
+                current_app.logger.warn(
+                    "Attempted to insert an image already exist in the database: " + url
+                )
+                cls.db.session.rollback()
+                obj = Photo.query.filter(Photo.url == url).first()
+            except MissingSchema as error:
+                abort(make_response({"error": str(error)}, status.HTTP_400_BAD_REQUEST))
 
-    @staticmethod
-    def get_file_extension(filename):
-        return filename.rsplit(".", 1)[1].lower()
+        search_results = search_face(obj, exclude_urls=[url])
 
-    @classmethod
-    def allowed_file(cls, filename):
-        return (
-            "." in filename
-            and cls.get_file_extension(filename) in cls.allowed_extensions
-        )
+        for i, results in enumerate(search_results):
+            if len(results) > 10:
+                search_results[i] = results[:10]
 
-    @classmethod
-    def upload(cls, file: FileStorage) -> str:
-        filename = f"{uuid.uuid4()}.{cls.get_file_extension(file.filename)}"
-        file.save(os.path.join(cls.upload_folder, filename))
-        return filename
+            for j, result in enumerate(search_results[i]):
+                search_results[i][j]["face"] = result["face"].to_dict()
+
+        return search_results
 
     @classmethod
     def register(cls, name: str, blueprint: Blueprint):
-        return super().register(
-            name, blueprint, methods=["GET", "POST"], pk_methods=["DELETE"]
-        )
+        return super().register(name, blueprint, methods=["GET", "PUT"], pk_methods=[])
 
 
 blueprint = Blueprint("faces", __name__)
 
-FaceView.register("faces", blueprint)
-PhotosView.register("photos", blueprint)
-ImageFileView.register("photo-upload", blueprint)
+FaceView.register("", blueprint)
+FaceSearchView.register("search", blueprint)

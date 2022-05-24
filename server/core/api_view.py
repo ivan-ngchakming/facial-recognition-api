@@ -249,9 +249,14 @@ class ApiView(MethodView):
         """Register view to flask app
 
         Args:
-            name (str): name of view
-            blueprint (Blueprint): blueprint object to register to
+            name (str): resource name, set "" to use blueprint base path.
+            blueprint (Blueprint): blueprint to register view to.
+            pk (str, optional): name of primary key. Defaults to "id".
+            pk_type (str, optional): type of primary key. Defaults to "string".
+            methods (_type_, optional): methods at resource root. Defaults to None.
+            pk_methods (_type_, optional): methods allowed with pk specified. Defaults to None.
         """
+
         view_func = cls.as_view(name)
         if methods is None or len(methods) > 0:
             blueprint.add_url_rule(
@@ -262,6 +267,6 @@ class ApiView(MethodView):
         if pk_methods is None or len(pk_methods) > 0:
             blueprint.add_url_rule(
                 view_func=view_func,
-                rule=f"/{name}/<{pk_type}:{pk}>",
+                rule=f"/{name}/<{pk_type}:{pk}>" if name else f"/<{pk_type}:{pk}>",
                 methods=pk_methods or ["GET", "PATCH", "DELETE"],
             )

@@ -4,9 +4,9 @@ from sqlalchemy import inspect
 from server.profiles.controllers import update_profile_attributes
 
 from ..database import db
-from ..faces.models import Photo
+from ..photos.models import Photo
 from ..profiles.models import Profile
-from ..search.services import search_face
+from ..faces.services import search_face
 
 
 def process_scrapped_data(data: dict, threshold=0.6) -> tuple:

@@ -24,6 +24,7 @@ sqlalchemy-serializer = "*"
 black = "*"
 gitpython = "*"
 tox = "*"
+boto3 = "*"
 
 [dev-packages]
 pre-commit = "*"

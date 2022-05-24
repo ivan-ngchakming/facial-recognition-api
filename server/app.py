@@ -36,7 +36,7 @@ def create_app(config=Config) -> FlaskAPI:
     # Setup migration
     Migrate(app, db, directory=app.config["MIGRATION_DIR"])
 
-    for name in ["core", "faces", "search", "scrapper", "profiles"]:
+    for name in ["core", "faces", "photos", "profiles", "scrapper"]:
         try:
             importlib.import_module(f".{name}.models", "server")
         except ModuleNotFoundError:
