@@ -65,7 +65,7 @@ def create_app(config=Config) -> FlaskAPI:
         cache_timeout=60 * 60 * 24 * 30 * 12,  # 12 months
     )
 
-    app.wsgi_app = CORSMiddleware(app.wsgi_app, allowed_origins)
+    app.wsgi_app = CORSMiddleware(app.wsgi_app, allowed_origins, ["/models", "/static"])
 
     CORS(app, origins=allowed_origins)
 
