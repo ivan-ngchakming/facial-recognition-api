@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 import requests
 from PIL import Image
+from werkzeug.datastructures import FileStorage
 
 from ..faces.models import Face
 from ..core.model_base import ModelBaseMixin
@@ -62,3 +63,7 @@ class Photo(db.Model, ModelBaseMixin):
         res = requests.get(url)
         image = Image.open(BytesIO(res.content))
         return image
+
+    @staticmethod
+    def get_image_from_file_storage(file: FileStorage) -> Image:
+        return Image.open(file)

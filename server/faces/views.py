@@ -2,6 +2,9 @@ from flask import Blueprint, abort, current_app, make_response, request
 from flask_api import status
 from requests.exceptions import MissingSchema
 from sqlalchemy.exc import IntegrityError
+from werkzeug.datastructures import FileStorage
+
+from server.config import Config
 
 from ..core.api_view import ApiView
 from ..photos.models import Photo
@@ -15,6 +18,8 @@ class FaceView(ApiView):
 
 
 class FaceSearchView(ApiView):
+    allowed_extensions = Config.ALLOWED_EXTENSIONS
+
     def get(self):
         url = request.args.get("url")
 
@@ -23,36 +28,51 @@ class FaceSearchView(ApiView):
 
         return self.search(url), status.HTTP_200_OK
 
-    def put(self):
-        data = request.json
+    def post(self):
+        file = request.files["file"]
+        if file.filename != "" and file and self.allowed_file(file.filename):
+            return self.search(file), status.HTTP_200_OK
 
-        if not data["url"]:
-            return {"error": "Image URL not provided."}, status.HTTP_400_BAD_REQUEST
+        return {"error": "Image URL not provided."}, status.HTTP_400_BAD_REQUEST
 
-        return self.search(data["url"]), status.HTTP_200_OK
+    @staticmethod
+    def get_file_extension(filename):
+        return filename.rsplit(".", 1)[1].lower()
 
     @classmethod
-    def search(cls, url: str):
-        if url.startswith("/static/"):
+    def allowed_file(cls, filename):
+        return (
+            "." in filename
+            and cls.get_file_extension(filename) in cls.allowed_extensions
+        )
+
+    @classmethod
+    def search(cls, source):
+        if isinstance(source, FileStorage):
+            obj = Photo()
+            image_arr = Photo.get_image_from_file_storage(source)
+            obj.create(image_arr)
+        elif source.startswith("/static/"):
             obj = Photo()
             try:
-                image_arr = Photo.get_image_from_url(url)
+                image_arr = Photo.get_image_from_url(source)
             except MissingSchema as error:
                 abort(make_response({"error": str(error)}, status.HTTP_400_BAD_REQUEST))
             obj.create(image_arr)
         else:
             try:
-                obj, _, _ = process_scrapped_data({"url": url})
+                obj, _, _ = process_scrapped_data({"url": source})
             except IntegrityError:
                 current_app.logger.warn(
-                    "Attempted to insert an image already exist in the database: " + url
+                    "Attempted to insert an image already exist in the database: "
+                    + source
                 )
                 cls.db.session.rollback()
-                obj = Photo.query.filter(Photo.url == url).first()
+                obj = Photo.query.filter(Photo.url == source).first()
             except MissingSchema as error:
                 abort(make_response({"error": str(error)}, status.HTTP_400_BAD_REQUEST))
 
-        search_results = search_face(obj, exclude_urls=[url])
+        search_results = search_face(obj, exclude_urls=[source])
 
         for i, results in enumerate(search_results):
             if len(results) > 10:
@@ -65,7 +85,7 @@ class FaceSearchView(ApiView):
 
     @classmethod
     def register(cls, name: str, blueprint: Blueprint):
-        return super().register(name, blueprint, methods=["GET", "PUT"], pk_methods=[])
+        return super().register(name, blueprint, methods=["GET", "POST"], pk_methods=[])
 
 
 blueprint = Blueprint("faces", __name__, url_prefix="/faces")
